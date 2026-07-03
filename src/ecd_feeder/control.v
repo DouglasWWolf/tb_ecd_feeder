@@ -52,6 +52,9 @@ module control # (parameter AW=8)
     // The number of 4K blocks of userwave-data written to host-RAM
     input[63:0] uw_written,
 
+    // The number of 4K blocks of userwave-data dropped due to overflow
+    input[31:0] uw_dropped,
+
     // These are asserted when the "ram_reader" modules are halted
     input reader_halted_0, reader_halted_1,
 
@@ -212,12 +215,24 @@ localparam REG_HBM1_TEMP = 19;
 
 /*
     @register Indicates a FIFO self-test failed
-    @rdesc    Bit 0 = 1 = Channel 0 self-test failed
-    @rdesc    Bit 1 = 1 = Channel 1 self-test failed
+    @rdesc    Bit  0 = Channel 0: Sequence check #0 failed
+    @rdesc    Bit  1 = Channel 0: Sequence check #1 failed
+    @rdesc    Bit  2 = Channel 0: Sequence check #2 failed
+    @rdesc    Bit  8 = Channel 1: Sequence check #0 failed
+    @rdesc    Bit  9 = Channel 1: Sequence check #1 failed
+    @rdesc    Bit 10 = Channel 1: Sequence check #2 failed
     @rtype r/o
 */
-
 localparam REG_SELFTEST_ERR = 20;
+
+
+/*
+    @register A count of the 4KB blocks of user-wave data dropped because
+    @rdesc    they wouldn't fit in the receiving FIFO
+    @rtype r/o
+*/
+localparam REG_UW_DROPPED = 21;
+
 
 //==========================================================================
 
@@ -411,6 +426,7 @@ always @(posedge clk) begin
 
             REG_HBM0_TEMP:          ashi_rdata <= hbm_temp_0;
             REG_HBM1_TEMP:          ashi_rdata <= hbm_temp_1;
+            REG_UW_DROPPED:         ashi_rdata <= uw_dropped;
 
             REG_SELFTEST_ERR:
                 if (use_sim_data)
