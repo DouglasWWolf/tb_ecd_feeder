@@ -238,13 +238,14 @@ always @(posedge clk) begin
         case (ashi_rindx)
             
             // Allow a read from any valid register                
-            REG_LINK_STATUS:      ashi_rdata <= link_status;
-            REG_CH0_MALFORMED:    ashi_rdata <= qsfp0_malformed;
-            REG_CH1_MALFORMED:    ashi_rdata <= qsfp1_malformed;
-            REG_UW_HOST_ADDR_H:   ashi_rdata <= uw_host_addr[63:32];
-            REG_UW_HOST_ADDR_L:   ashi_rdata <= uw_host_addr[31:00];            
-            REG_UW_HOST_SIZE_H:   ashi_rdata <= uw_host_size[63:32];
-            REG_UW_HOST_SIZE_L:   ashi_rdata <= uw_host_size[31:00];    
+            REG_LINK_STATUS:    ashi_rdata <= link_status;
+            REG_CH0_MALFORMED:  ashi_rdata <= qsfp0_malformed;
+            REG_CH1_MALFORMED:  ashi_rdata <= qsfp1_malformed;
+            REG_QSFP_SWAPPED:   ashi_rdata <= swapped_cables;
+            REG_UW_HOST_ADDR_H: ashi_rdata <= uw_host_addr[63:32];
+            REG_UW_HOST_ADDR_L: ashi_rdata <= uw_host_addr[31:00];            
+            REG_UW_HOST_SIZE_H: ashi_rdata <= uw_host_size[63:32];
+            REG_UW_HOST_SIZE_L: ashi_rdata <= uw_host_size[31:00];    
             
             REG_UW_WRITTEN_H:
                 begin
@@ -258,8 +259,8 @@ always @(posedge clk) begin
                     uw_dropped_l <= uw_dropped[31:00];
                 end
 
-            REG_UW_WRITTEN_L:     ashi_rdata <= uw_written_l;
-            REG_UW_DROPPED_L:     ashi_rdata <= uw_dropped_l;
+            REG_UW_WRITTEN_L: ashi_rdata <= uw_written_l;
+            REG_UW_DROPPED_L: ashi_rdata <= uw_dropped_l;
 
 
             // Reads of any other register are a decode-error
@@ -287,7 +288,7 @@ i_cdc_rx0_aligned
 (
     .src_clk (                 ),
     .src_in  (async_rx0_aligned),
-    .dest_clk(rx_clk           ),
+    .dest_clk(clk              ),
     .dest_out(link_status[0]   )
 );
 //=============================================================================
@@ -307,7 +308,7 @@ i_cdc_rx1_aligned
 (
     .src_clk (                 ),
     .src_in  (async_rx1_aligned),
-    .dest_clk(rx_clk           ),
+    .dest_clk(clk              ),
     .dest_out(link_status[1]   )
 );
 //=============================================================================
