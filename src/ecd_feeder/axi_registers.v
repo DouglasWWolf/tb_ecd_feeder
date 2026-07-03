@@ -24,6 +24,9 @@ module axi_registers # (parameter AW=8)
     // the arrival FIFO
     input[63:0] uw_dropped, uw_written,
 
+    // Number of malformed packets detected on each QSFP port
+    input[31:0] qsfp0_malformed, qsfp1_malformed,
+
     // Asynchronous ethernet-link status for each QSFP
     input async_rx0_aligned, async_rx1_aligned,    
 
@@ -117,6 +120,18 @@ localparam REG_QSFP_SWAPPED = 8;
 */
 localparam REG_LINK_STATUS = 9;
 
+
+/*
+    @register The number of malformed packed received on QSFP_0
+    @rtype r/o
+*/
+localparam REG_CH0_MALFORMED = 10;
+
+/*
+    @register The number of malformed packed received on QSFP_1
+    @rtype r/o
+*/
+localparam REG_CH1_MALFORMED = 11;
 
 //==========================================================================
 
@@ -224,6 +239,8 @@ always @(posedge clk) begin
             
             // Allow a read from any valid register                
             REG_LINK_STATUS:      ashi_rdata <= link_status;
+            REG_CH0_MALFORMED:    ashi_rdata <= qsfp0_malformed;
+            REG_CH1_MALFORMED:    ashi_rdata <= qsfp1_malformed;
             REG_UW_HOST_ADDR_H:   ashi_rdata <= uw_host_addr[63:32];
             REG_UW_HOST_ADDR_L:   ashi_rdata <= uw_host_addr[31:00];            
             REG_UW_HOST_SIZE_H:   ashi_rdata <= uw_host_size[63:32];
