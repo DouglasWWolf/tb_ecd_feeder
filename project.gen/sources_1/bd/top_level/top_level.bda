@@ -317,6 +317,24 @@
             "V10": {
                 "VT": "AC",
                 "BA": "0x0000000000002000",
+                "HA": "0x0000000000002FFF",
+                "BP": "C_BASEADDR",
+                "HP": "C_HIGHADDR",
+                "MA": "M_AXI",
+                "MX": "/uart_axi_bridge/axi_uart_bridge",
+                "MI": "M_AXI",
+                "MS": "SEG_axi_registers_reg0",
+                "MV": "xilinx.com:module_ref:axi_uart_bridge:1.0",
+                "SX": "/axi_registers",
+                "SI": "S_AXI",
+                "SS": "reg0",
+                "SV": "xilinx.com:module_ref:axi_registers:1.0",
+                "TM": "both",
+                "TU": "register"
+            },
+            "V11": {
+                "VT": "AC",
+                "BA": "0x0000000000002000",
                 "HA": "0x0000000000003FFF",
                 "BP": "C_BASEADDR",
                 "HP": "C_HIGHADDR",
@@ -332,7 +350,7 @@
                 "TM": "both",
                 "TU": "register"
             },
-            "V11": {
+            "V12": {
                 "VT": "AC",
                 "BA": "0x0000000000002000",
                 "HA": "0x0000000000003FFF",
@@ -350,7 +368,7 @@
                 "TM": "both",
                 "TU": "register"
             },
-            "V12": {
+            "V13": {
                 "VT": "AC",
                 "BA": "0x000003000",
                 "HA": "0x000003FFF",
@@ -368,7 +386,7 @@
                 "TM": "both",
                 "TU": "memory"
             },
-            "V13": {
+            "V14": {
                 "VT": "AC",
                 "BA": "0x40600000",
                 "HA": "0x4060FFFF",
@@ -448,6 +466,11 @@
             },
             {
                 "src": "V13",
+                "trg": "V2",
+                "EH": "2"
+            },
+            {
+                "src": "V14",
                 "trg": "V2",
                 "EH": "2"
             }

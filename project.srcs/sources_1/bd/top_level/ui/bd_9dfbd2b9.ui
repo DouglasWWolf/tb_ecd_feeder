@@ -17,24 +17,24 @@ preplace portBus remote_send_cnt -pg 1 -lvl 5 -x 1460 -y 320 -defaultsOSRD -righ
 preplace inst host_ram_reader -pg 1 -lvl 2 -x 590 -y 40 -swap {0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 50 43 44 48 45 46 47 49} -defaultsOSRD -pinDir axis_out right -pinY axis_out 240R -pinDir M_AXI left -pinY M_AXI 20L -pinDir clk left -pinY clk 40L -pinDir resetn left -pinY resetn 240L -pinBusDir i_host_frame_size left -pinBusY i_host_frame_size 100L -pinBusDir i_fd_host_addr left -pinBusY i_fd_host_addr 120L -pinBusDir i_fd_host_size left -pinBusY i_fd_host_size 200L -pinDir i_enable left -pinY i_enable 140L -pinDir i_use_sim_data left -pinY i_use_sim_data 160L -pinDir halted left -pinY halted 180L -pinBusDir half_frames_consumed left -pinBusY half_frames_consumed 220L
 preplace inst control -pg 1 -lvl 1 -x 190 -y 120 -swap {0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 24 22 23 27 28 26 34 33 25 29 31 30 32} -defaultsOSRD -pinDir S_AXI left -pinY S_AXI 20L -pinDir clk left -pinY clk 40L -pinDir resetn left -pinY resetn 60L -pinDir enable right -pinY enable 60R -pinBusDir host_frame_size right -pinBusY host_frame_size 20R -pinBusDir fd_host_addr right -pinBusY fd_host_addr 40R -pinBusDir fd_host_size right -pinBusY fd_host_size 120R -pinBusDir half_frames_consumed_1 right -pinBusY half_frames_consumed_1 140R -pinDir reader_halted_1 right -pinY reader_halted_1 100R -pinDir send_stb right -pinY send_stb 410R -pinBusDir send_cnt right -pinBusY send_cnt 390R -pinDir use_sim_data right -pinY use_sim_data 80R -pinBusDir resetn_out right -pinBusY resetn_out 160R -pinBusDir hbm_temp_0 right -pinBusY hbm_temp_0 260R -pinBusDir selftest_err_0 right -pinBusY selftest_err_0 220R -pinDir fifo_full_0 right -pinY fifo_full_0 300R
 preplace inst hbm_fifo -pg 1 -lvl 3 -x 930 -y 260 -swap {0 1 2 3 4 5 6 7 11 9 8 10} -defaultsOSRD -pinDir SLOT_0_AXIS left -pinY SLOT_0_AXIS 20L -pinDir axis_out right -pinY axis_out 20R -pinDir clk left -pinY clk 180L -pinDir aresetn left -pinY aresetn 140L -pinBusDir hbm_temp left -pinBusY hbm_temp 120L -pinDir fifo_full left -pinY fifo_full 160L
-preplace inst fd_emitter -pg 1 -lvl 4 -x 1260 -y 260 -swap {0 1 2 3 4 5 6 7 8 16 11 15 12 13 14 10 9} -defaultsOSRD -pinDir raw_in left -pinY raw_in 20L -pinDir pkt_in right -pinY pkt_in 20R -pinDir clk left -pinY clk 290L -pinDir resetn left -pinY resetn 230L -pinDir local_send_stb left -pinY local_send_stb 270L -pinDir remote_send_stb right -pinY remote_send_stb 40R -pinBusDir local_send_cnt left -pinBusY local_send_cnt 250L -pinBusDir remote_send_cnt right -pinBusY remote_send_cnt 60R -pinBusDir fd_host_size left -pinBusY fd_host_size 60L -pinBusDir error left -pinBusY error 40L
+preplace inst fd_emitter -pg 1 -lvl 4 -x 1260 -y 260 -swap {0 1 2 3 4 5 6 7 8 16 11 15 12 13 14 10 9} -defaultsOSRD -pinDir axis_in left -pinY axis_in 20L -pinDir pkt_in right -pinY pkt_in 20R -pinDir clk left -pinY clk 290L -pinDir resetn left -pinY resetn 230L -pinDir local_send_stb left -pinY local_send_stb 270L -pinDir remote_send_stb right -pinY remote_send_stb 40R -pinBusDir local_send_cnt left -pinBusY local_send_cnt 250L -pinBusDir remote_send_cnt right -pinBusY remote_send_cnt 60R -pinBusDir fd_host_size left -pinBusY fd_host_size 60L -pinBusDir error left -pinBusY error 40L
 preplace netloc control_enable 1 1 1 N 180
 preplace netloc control_fd_host_addr 1 1 1 N 160
-preplace netloc control_fd_host_size 1 1 3 400 360 800J 220 1060
+preplace netloc control_fd_host_size 1 1 3 410 360 790J 220 1050
 preplace netloc control_host_frame_size 1 1 1 N 140
-preplace netloc control_resetn_out 1 1 3 360 400 800 490 N
+preplace netloc control_resetn_out 1 1 3 370 400 810 490 N
 preplace netloc control_send_cnt 1 1 3 NJ 510 NJ 510 N
 preplace netloc control_send_stb 1 1 3 NJ 530 NJ 530 N
 preplace netloc control_use_sim_data 1 1 1 N 200
+preplace netloc fifo_selftest_0_error 1 1 3 NJ 340 770J 200 1070
 preplace netloc hbm_fifo_fifo_full 1 1 2 NJ 420 N
 preplace netloc hbm_fifo_hbm_temp 1 1 2 NJ 380 N
 preplace netloc host_ram_reader_half_frames_consumed 1 1 1 N 260
 preplace netloc host_ram_reader_halted 1 1 1 N 220
 preplace netloc remote_send_cnt_1 1 4 1 NJ 320
 preplace netloc remote_send_stb_1 1 4 1 NJ 300
-preplace netloc source_100mhz_sys_clk 1 0 4 20 80 380 440 780 550 N
+preplace netloc source_100mhz_sys_clk 1 0 4 30 80 390 440 790 550 N
 preplace netloc source_100mhz_sys_resetn 1 0 1 NJ 180
-preplace netloc fifo_selftest_0_error 1 1 3 NJ 340 780J 200 1080
 preplace netloc fd_emitter_axis_out 1 4 1 NJ 280
 preplace netloc hbm_fifo_axis_out 1 3 1 N 280
 preplace netloc host_ram_reader_M_AXI 1 0 2 NJ 60 NJ
@@ -43,8 +43,8 @@ preplace netloc system_interconnect_M00_AXI 1 0 1 NJ 140
 levelinfo -pg 1 0 190 590 930 1260 1460
 pagesize -pg 1 -db -bbox -sgen -100 0 1680 600
 ",
-   "No Loops_ScaleFactor":"0.769752",
-   "No Loops_TopLeft":"-95,-97",
+   "No Loops_ScaleFactor":"1.0",
+   "No Loops_TopLeft":"-433,19",
    "guistr":"# # String gsaved with Nlview 7.8.0 2024-04-26 e1825d835c VDI=44 GEI=38 GUI=JA:21.0 TLS
 #  -string -flagsOSRD
 preplace port M_AXI -pg 1 -lvl 3 -x 970 -y 100 -defaultsOSRD

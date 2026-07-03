@@ -28,9 +28,6 @@ module control # (parameter AW=8)
     // The address and size of the frame-data buffer in host-RAM
     output reg [63:0] fd_host_addr, fd_host_size,
 
-    // The address and size of the userwave-data buffer in host-RAM
-    output reg [63:0] uw_host_addr, uw_host_size, 
-
     // The number of frames consumed from host-RAM
     input [63:0] half_frames_consumed_0, half_frames_consumed_1,
 
@@ -48,12 +45,6 @@ module control # (parameter AW=8)
 
     // These are asserted when a FIFO self-test fails
     input[7:0] selftest_err_0, selftest_err_1,
-
-    // The number of 4K blocks of userwave-data written to host-RAM
-    input[63:0] uw_written,
-
-    // The number of 4K blocks of userwave-data dropped due to overflow
-    input[31:0] uw_dropped,
 
     // These are asserted when the "ram_reader" modules are halted
     input reader_halted_0, reader_halted_1,
@@ -138,23 +129,6 @@ localparam REG_FD_HOST_ADDR_L = 3;
 localparam REG_FD_HOST_SIZE_H = 4;
 localparam REG_FD_HOST_SIZE_L = 5;
 
-/*
-    @register The base address where userwave-data will be stored in host-RAM
-    @rdesc    Must be on a 4KB boundary
-    @rname REG_UW_HOST_ADDR
-    @rsize 64
-*/
-localparam REG_UW_HOST_ADDR_H = 6;
-localparam REG_UW_HOST_ADDR_L = 7;
-
-/*
-    @register The size of the ring-buffer where userwave-data will be stored
-    @rdesc    in host-RAM.   Must be a multiple of 4KB
-    @rname REG_UW_HOST_SIZE
-    @rsize 64
-*/
-localparam REG_UW_HOST_SIZE_H = 8;
-localparam REG_UW_HOST_SIZE_L = 9;
 
 /*
     @register The number of frames of data consumed so far
@@ -164,12 +138,6 @@ localparam REG_UW_HOST_SIZE_L = 9;
 localparam REG_FRM_CONSUMED_H = 10;
 localparam REG_FRM_CONSUMED_L = 11;
 
-/*
-    @register The number of 4KB blocks of userwave-data written
-    @rdesc    to host-RAM.
-*/
-localparam REG_UW_WRITTEN_H = 12;
-localparam REG_UW_WRITTEN_L = 13;
 
 
 /*
@@ -224,14 +192,6 @@ localparam REG_HBM1_TEMP = 19;
     @rtype r/o
 */
 localparam REG_SELFTEST_ERR = 20;
-
-
-/*
-    @register A count of the 4KB blocks of user-wave data dropped because
-    @rdesc    they wouldn't fit in the receiving FIFO
-    @rtype r/o
-*/
-localparam REG_UW_DROPPED = 21;
 
 
 //==========================================================================
@@ -289,11 +249,6 @@ reg running;
 // uppper 32-bits were last read
 reg[31:0] frames_consumed_l;
 reg       frames_consumed_l_saved;
-
-// The lower 32-bits of "uw_written" at the moment that the 
-// uppper 32-bits were last read
-reg[31:0] uw_written_l;
-reg       uw_written_l_saved;
  
 // If either HBM bank shows a catastrophic temperature, shut down the FPGA!
 assign cattrip = cattrip_0 | cattrip_1;
@@ -329,8 +284,6 @@ always @(posedge clk) begin
         host_frame_size   <= 32'h40_0000;
         fd_host_addr      <= 64'h1_0000_0000;
         fd_host_size      <= 64'h4_0000_0000;
-        uw_host_addr      <= 64'h5_0000_0000;
-        uw_host_size      <= 64'h1_8000_0000;
         use_sim_data      <= 0;
     end
 
@@ -364,10 +317,6 @@ always @(posedge clk) begin
                     REG_FD_HOST_ADDR_L:  if (!enable) fd_host_addr[31:00] <= ashi_wdata;
                     REG_FD_HOST_SIZE_H:  if (!enable) fd_host_size[63:32] <= ashi_wdata;
                     REG_FD_HOST_SIZE_L:  if (!enable) fd_host_size[31:00] <= ashi_wdata;
-                    REG_UW_HOST_ADDR_H:  if (!enable) uw_host_addr[63:32] <= ashi_wdata;
-                    REG_UW_HOST_ADDR_L:  if (!enable) uw_host_addr[31:00] <= ashi_wdata;
-                    REG_UW_HOST_SIZE_H:  if (!enable) uw_host_size[63:32] <= ashi_wdata;
-                    REG_UW_HOST_SIZE_L:  if (!enable) uw_host_size[31:00] <= ashi_wdata;
 
 
                     // Writes to any other register are a decode-error
@@ -394,8 +343,6 @@ always @(posedge clk) begin
         ashi_read_state         <= 0;
         frames_consumed_l       <= 0;
         frames_consumed_l_saved <= 0;
-        uw_written_l            <= 0;
-        uw_written_l_saved      <= 0;
     end
 
     // If we're not in reset, and a read-request has occured...        
@@ -419,14 +366,8 @@ always @(posedge clk) begin
             REG_FD_HOST_SIZE_H:     ashi_rdata <= fd_host_size[63:32];
             REG_FD_HOST_SIZE_L:     ashi_rdata <= fd_host_size[31:00];            
 
-            REG_UW_HOST_ADDR_H:     ashi_rdata <= uw_host_addr[63:32];
-            REG_UW_HOST_ADDR_L:     ashi_rdata <= uw_host_addr[31:00];            
-            REG_UW_HOST_SIZE_H:     ashi_rdata <= uw_host_size[63:32];
-            REG_UW_HOST_SIZE_L:     ashi_rdata <= uw_host_size[31:00];    
-
             REG_HBM0_TEMP:          ashi_rdata <= hbm_temp_0;
             REG_HBM1_TEMP:          ashi_rdata <= hbm_temp_1;
-            REG_UW_DROPPED:         ashi_rdata <= uw_dropped;
 
             REG_SELFTEST_ERR:
                 if (use_sim_data)
@@ -450,21 +391,6 @@ always @(posedge clk) begin
                     frames_consumed_l <= 0;
                 end
 
-            REG_UW_WRITTEN_H:
-                begin
-                    ashi_rdata         <= uw_written[63:32];
-                    uw_written_l       <= uw_written[31:00];
-                    uw_written_l_saved <= 1;
-                end
-
-            REG_UW_WRITTEN_L:
-                begin
-                    if (uw_written_l_saved)
-                        ashi_rdata <= uw_written_l;
-                    else
-                        ashi_rdata <= uw_written[31:0];
-                    uw_written_l_saved <= 0;
-                end
 
             // Reads of any other register are a decode-error
             default: ashi_rresp <= DECERR;
