@@ -3,7 +3,7 @@
 
 // Packet types
 localparam  PT_FRAME_DATA = 0;
-localparam  PT_FRAME_REQ  = 1;
+localparam  PT_COMMAND    = 1;
 localparam  PT_UW_DATA    = 2;
 
 // "host_ram_reader" has a FIFO.  This is how deep it is
