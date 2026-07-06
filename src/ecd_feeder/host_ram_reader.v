@@ -126,9 +126,6 @@ reg[63:0] fd_host_size;
 reg       enable;
 reg       use_sim_data;
 //-----------------------------------------------------------------------------
-// This is the starting address of the last block in this bank
-reg[63:0] last_block_offset;
-//-----------------------------------------------------------------------------
 always @(posedge clk) begin
     if (resetn == 0) begin
         enable <= 0;
@@ -140,19 +137,12 @@ always @(posedge clk) begin
         fd_host_size    <= i_fd_host_size;
         enable          <= i_enable;
         use_sim_data    <= i_use_sim_data;
-        if (CHANNEL == 0)
-            last_block_offset <= FIRST_RAM_OFFSET + i_fd_host_size - 2 * BURST_SIZE;
-        else
-            last_block_offset <= FIRST_RAM_OFFSET + i_fd_host_size - 1 * BURST_SIZE;                    
     end
 end
 //=============================================================================
 
-// This is the address of the last 64-byte word in this bank
-wire[63:0] last_bank_offset = last_block_offset + BURST_SIZE - 64;              
-
 // The number of AXI bursts in a host-frame
-wire[31:0] bursts_per_half_frame = (host_frame_size / BURST_SIZE * 2);
+wire[31:0] bursts_per_half_frame = (host_frame_size / 2) / BURST_SIZE;
 
 // This is the burst number within a single half-frame
 reg[31:0] burst_within_frame;
@@ -200,11 +190,14 @@ assign M_AXI_RREADY  = (resetn == 1);
 // next burst of data from.  This block computes the *next* offset in host RAM
 // that we will read from
 //=============================================================================
+reg[63:0] maybe_araddr;
+//-----------------------------------------------------------------------------
 always @* begin
-    if (araddr == last_block_offset)
-        next_araddr = FIRST_RAM_OFFSET;
+    maybe_araddr = araddr + BURST_SIZE * 2;
+    if (maybe_araddr < fd_host_size)
+        next_araddr = maybe_araddr;
     else
-        next_araddr = araddr + BURST_SIZE * 2;
+        next_araddr = FIRST_RAM_OFFSET;
 end
 //=============================================================================
 
@@ -322,11 +315,14 @@ end
 //=============================================================================
 // This computes the *next* value for "sim_data"
 //=============================================================================
+reg[63:0] maybe_sim_data;
+//-----------------------------------------------------------------------------
 always @* begin
-    if (sim_data == last_bank_offset)
-        next_sim_data = FIRST_RAM_OFFSET;
+    maybe_sim_data = sim_data + 64 + ((M_AXI_RLAST) ? BURST_SIZE : 0);
+    if (maybe_sim_data < fd_host_size)
+        next_sim_data = maybe_sim_data;
     else
-        next_sim_data = sim_data + 64 + ((M_AXI_RLAST) ? BURST_SIZE : 0);
+        next_sim_data = FIRST_RAM_OFFSET;
 end
 //=============================================================================
 
@@ -339,8 +335,9 @@ end
 always @(posedge clk) begin
     if (resetn == 0)
         sim_data <= FIRST_RAM_OFFSET;
-    else if (M_AXI_RREADY & M_AXI_RVALID)
+    else if (M_AXI_RREADY & M_AXI_RVALID) begin
         sim_data <= next_sim_data;
+    end
 end
 //=============================================================================
 

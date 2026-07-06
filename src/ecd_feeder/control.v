@@ -236,8 +236,6 @@ reg[1:0] rsm_state;
 wire system_halted = reader_halted_0
                    & reader_halted_1;
 
-// Compute the number of whole frames consumed
-wire[63:0] frames_consumed = (half_frames_consumed_0 + half_frames_consumed_1) / 2;
 
 // When this strobes high, we start fetching data from host RAM
 reg start_stb;
@@ -252,6 +250,23 @@ reg       frames_consumed_l_saved;
  
 // If either HBM bank shows a catastrophic temperature, shut down the FPGA!
 assign cattrip = cattrip_0 | cattrip_1;
+
+//=============================================================================
+// Compute the number of whole frames consumed by doubling the 
+// number of half-frames consumed from the channel with the fewest
+// half-frames consumed
+//=============================================================================
+reg[63:0] frames_consumed;
+//-----------------------------------------------------------------------------
+always @* begin
+    if (half_frames_consumed_0 < half_frames_consumed_1)
+        frames_consumed = half_frames_consumed_0;
+    else
+        frames_consumed = half_frames_consumed_1;
+end
+//=============================================================================
+
+
 
 //==========================================================================
 // Manage the "halt-request" signal

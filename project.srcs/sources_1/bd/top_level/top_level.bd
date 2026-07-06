@@ -7,7 +7,8 @@
       "name": "top_level",
       "rev_ctrl_bd_flag": "RevCtrlBdOff",
       "synth_flow_mode": "Hierarchical",
-      "tool_version": "2024.2"
+      "tool_version": "2024.2",
+      "validated": "true"
     },
     "design_tree": {
       "source_100mhz": {
@@ -81,11 +82,43 @@
     "ports": {
       "CLK100MHZ": {
         "type": "clk",
-        "direction": "I"
+        "direction": "I",
+        "parameters": {
+          "CLK_DOMAIN": {
+            "value": "top_level_CLK100MHZ",
+            "value_src": "default"
+          },
+          "FREQ_HZ": {
+            "value": "100000000",
+            "value_src": "default"
+          },
+          "FREQ_TOLERANCE_HZ": {
+            "value": "0",
+            "value_src": "default"
+          },
+          "INSERT_VIP": {
+            "value": "0",
+            "value_src": "default"
+          },
+          "PHASE": {
+            "value": "0.0",
+            "value_src": "default"
+          }
+        }
       },
       "CPU_RESETN": {
         "type": "rst",
-        "direction": "I"
+        "direction": "I",
+        "parameters": {
+          "INSERT_VIP": {
+            "value": "0",
+            "value_src": "default"
+          },
+          "POLARITY": {
+            "value": "ACTIVE_LOW",
+            "value_src": "default"
+          }
+        }
       }
     },
     "components": {
@@ -6876,8 +6909,8 @@
               "control_resetn_out": {
                 "ports": [
                   "resetn",
-                  "fifo_selftest/resetn",
-                  "fd_emitter/resetn"
+                  "fd_emitter/resetn",
+                  "fifo_selftest/resetn"
                 ]
               },
               "control_send_cnt": {
@@ -6913,8 +6946,8 @@
               "source_100mhz_sys_clk": {
                 "ports": [
                   "clk",
-                  "fifo_selftest/clk",
-                  "fd_emitter/clk"
+                  "fd_emitter/clk",
+                  "fifo_selftest/clk"
                 ]
               }
             }
@@ -6968,8 +7001,8 @@
           "control_fd_host_size": {
             "ports": [
               "control/fd_host_size",
-              "host_ram_reader/i_fd_host_size",
-              "fd_emitter/fd_host_size"
+              "fd_emitter/fd_host_size",
+              "host_ram_reader/i_fd_host_size"
             ]
           },
           "control_host_frame_size": {
@@ -6982,8 +7015,8 @@
             "ports": [
               "control/resetn_out",
               "hbm_fifo/aresetn",
-              "host_ram_reader/resetn",
-              "fd_emitter/resetn"
+              "fd_emitter/resetn",
+              "host_ram_reader/resetn"
             ]
           },
           "control_send_cnt": {
@@ -7051,8 +7084,8 @@
               "clk",
               "control/clk",
               "hbm_fifo/clk",
-              "host_ram_reader/clk",
-              "fd_emitter/clk"
+              "fd_emitter/clk",
+              "host_ram_reader/clk"
             ]
           },
           "source_100mhz_sys_resetn": {
@@ -7110,6 +7143,10 @@
               "PROTOCOL": {
                 "value": "AXI4LITE",
                 "value_src": "constant"
+              },
+              "FREQ_HZ": {
+                "value": "50000000",
+                "value_src": "ip_prop"
               },
               "ID_WIDTH": {
                 "value": "0",
@@ -7194,6 +7231,30 @@
               "MAX_BURST_LENGTH": {
                 "value": "1",
                 "value_src": "auto"
+              },
+              "PHASE": {
+                "value": "0.0",
+                "value_src": "ip_prop"
+              },
+              "CLK_DOMAIN": {
+                "value": "/source_100mhz/system_clock_clk_out1",
+                "value_src": "ip_prop"
+              },
+              "NUM_READ_THREADS": {
+                "value": "1",
+                "value_src": "user_prop"
+              },
+              "NUM_WRITE_THREADS": {
+                "value": "1",
+                "value_src": "user_prop"
+              },
+              "RUSER_BITS_PER_BYTE": {
+                "value": "0",
+                "value_src": "user_prop"
+              },
+              "WUSER_BITS_PER_BYTE": {
+                "value": "0",
+                "value_src": "user_prop"
               }
             },
             "memory_map_ref": "S_AXI",
@@ -7307,6 +7368,18 @@
               "ASSOCIATED_RESET": {
                 "value": "resetn",
                 "value_src": "constant"
+              },
+              "FREQ_HZ": {
+                "value": "50000000",
+                "value_src": "ip_prop"
+              },
+              "PHASE": {
+                "value": "0.0",
+                "value_src": "ip_prop"
+              },
+              "CLK_DOMAIN": {
+                "value": "/source_100mhz/system_clock_clk_out1",
+                "value_src": "ip_prop"
               }
             }
           },

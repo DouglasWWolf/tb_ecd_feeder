@@ -55,16 +55,6 @@ localparam BURST_CYCLES = BURST_SIZE / 64;
 // The offset in RAM where we expect our first incoming burst to come from
 localparam FIRST_RAM_OFFSET = (CHANNEL == 0) ? 32'h0000 : 32'h1000;
 
-// Determine the starting address of the last block in this bank
-wire[63:0] last_block_offset;
-if (CHANNEL == 0)
-    assign last_block_offset = FIRST_RAM_OFFSET + fd_host_size - (2 * BURST_SIZE);
-else
-    assign last_block_offset = FIRST_RAM_OFFSET + fd_host_size - (1 * BURST_SIZE);      
-
-// This is the address of the last 64-byte word in this bank
-wire[63:0] last_bank_offset = last_block_offset + BURST_SIZE - 64;              
-
 // This is the simulation data that we expect to see on the input stream
 reg[63:0] sim_data, next_sim_data;
 
@@ -95,11 +85,14 @@ end
 //=============================================================================
 // This computes the *next* value for "sim_data"
 //=============================================================================
+reg[63:0] maybe_sim_data;
+//-----------------------------------------------------------------------------
 always @* begin
-    if (sim_data == last_bank_offset)
-        next_sim_data = FIRST_RAM_OFFSET;
+    maybe_sim_data = sim_data + 64 + (raw_in_tlast ? BURST_SIZE : 0);
+    if (maybe_sim_data < fd_host_size)
+        next_sim_data = maybe_sim_data;
     else
-        next_sim_data = sim_data + 64 + (raw_in_tlast ? BURST_SIZE : 0);
+        next_sim_data = FIRST_RAM_OFFSET;
 end
 //=============================================================================
 
