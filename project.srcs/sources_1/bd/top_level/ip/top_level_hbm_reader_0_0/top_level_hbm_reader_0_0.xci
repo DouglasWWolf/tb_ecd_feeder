@@ -48,6 +48,8 @@
         "resetn": [ { "direction": "in" } ],
         "start_stb": [ { "direction": "in" } ],
         "bank_select": [ { "direction": "in" } ],
+        "enable": [ { "direction": "in" } ],
+        "halted": [ { "direction": "out" } ],
         "idle": [ { "direction": "out" } ],
         "blocks_to_read": [ { "direction": "in", "size_left": "31", "size_right": "0" } ],
         "fifo_full": [ { "direction": "out" } ],

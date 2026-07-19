@@ -34,15 +34,15 @@ module fifo_selftest #
     output reg[7:0] error,
 
     (* X_INTERFACE_MODE = "monitor" *)
-    input[DW-1:0]       raw_in_tdata,
-    input               raw_in_tvalid,
-    input               raw_in_tready,
+    input[DW-1:0]       i_raw_in_tdata,
+    input               i_raw_in_tvalid,
+    input               i_raw_in_tready,
 
     (* X_INTERFACE_MODE = "monitor" *)
-    input[PKT_DW-1:0]   pkt_in_tdata,
-    input               pkt_in_tlast,
-    input               pkt_in_tvalid,
-    input               pkt_in_tready
+    input[PKT_DW-1:0]   i_pkt_in_tdata,
+    input               i_pkt_in_tlast,
+    input               i_pkt_in_tvalid,
+    input               i_pkt_in_tready
 
 );
 
@@ -61,18 +61,44 @@ reg[63:0] sim_data, next_sim_data;
 // This is the handshake on "raw_in"
 wire raw_in_hsk = raw_in_tvalid & raw_in_tready;
 
+
+//=============================================================================
+// Here we register our inputs
+//=============================================================================
+reg[DW-1:0]     raw_in_tdata;
+reg             raw_in_tvalid;
+reg             raw_in_tready;
+
+reg[PKT_DW-1:0] pkt_in_tdata;
+reg             pkt_in_tlast;
+reg             pkt_in_tvalid;
+reg             pkt_in_tready;
+
+always @(posedge clk) begin
+    raw_in_tdata  = i_raw_in_tdata ; 
+    raw_in_tvalid = i_raw_in_tvalid;   
+    raw_in_tready = i_raw_in_tready;    
+    pkt_in_tdata  = i_pkt_in_tdata ;  
+    pkt_in_tlast  = i_pkt_in_tlast ;  
+    pkt_in_tvalid = i_pkt_in_tvalid;   
+    pkt_in_tready = i_pkt_in_tready;  
+end
+//=============================================================================
+
 //=============================================================================
 // Here we count incoming data-cycles and assert "raw_in_tlast" on the last
 // cycle of a burst of data.  We're effectively emulating the missing "tlast"
 // signal on the "raw" input stream
 //=============================================================================
 reg[7:0] cycle;
-wire     raw_in_tlast = (cycle == BURST_CYCLES);
+reg      raw_in_tlast;
 //-----------------------------------------------------------------------------
 always @(posedge clk) begin
-    if (resetn == 0)
-        cycle <= 1;
-    else if (raw_in_hsk) begin
+    if (resetn == 0) begin
+        cycle        <= 1;
+        raw_in_tlast <= 0;
+    end else if (raw_in_hsk) begin
+        raw_in_tlast <= (cycle == BURST_CYCLES - 1);
         if (cycle == BURST_CYCLES)
             cycle <= 1;
         else

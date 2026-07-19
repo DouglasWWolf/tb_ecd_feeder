@@ -50,6 +50,8 @@
         "bank_select": [ { "direction": "in" } ],
         "halt_req_stb": [ { "direction": "in" } ],
         "idle": [ { "direction": "out" } ],
+        "enable": [ { "direction": "in" } ],
+        "halted": [ { "direction": "out" } ],
         "blocks_stored_in_hbm": [ { "direction": "out", "size_left": "31", "size_right": "0" } ],
         "axis_in_tdata": [ { "direction": "in", "size_left": "63", "size_right": "0", "driver_value": "0" } ],
         "axis_in_tvalid": [ { "direction": "in" } ],

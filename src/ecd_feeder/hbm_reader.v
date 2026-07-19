@@ -28,7 +28,13 @@ module hbm_reader #
     
     // This is the HBM bank we're reading from
     input           bank_select,
-    
+
+    // Asserted when it's safe to run
+    input           enable,
+
+    // Asserted when it's safe to reset
+    output reg      halted,
+
     // This is asserted when we're completely idle
     output          idle,
 
@@ -103,7 +109,7 @@ localparam HBM_BLOCK_SIZE = 64 * (DW/8);
 // The number of data-cycles in a block of data
 localparam CYCLES_PER_BLOCK = HBM_BLOCK_SIZE / (DW/8);
 
-// Determine the HBM base address where we will write blocks
+// Determine the HBM base address where we will read blocks
 wire[63:0] base_address = (bank_select) ? HBM_BANK_SIZE : 0;
 
 // We're not using the write-side of M_AXI
@@ -136,6 +142,9 @@ assign M_AXI_ARPROT  = 0;
 
 // The number of transactions completed on the AR and R channels of M_AXI
 reg[31:0] ar_blocks, r_blocks;
+
+// This is the number of blocks requested, but not yet received
+wire[31:0] blocks_outstanding = ar_blocks - r_blocks;
 
 //=============================================================================
 // Here we track the number of transactions completed on each channel since
@@ -180,6 +189,9 @@ always @(posedge clk) begin
     else
         fifo_free <= fifo_free - data_in + data_out;
 end
+
+// Tell the outside world when our FIFO is full
+assign fifo_full = (fifo_free == 0);
 //=============================================================================
 
 
@@ -191,8 +203,12 @@ reg[1:0] arsm_state;
 //-----------------------------------------------------------------------------
 always @(posedge clk) begin
 
+    // We're halted when we're disabled and all req'd blocks have been rcvd
+    halted <= (arsm_state != 2) & (enable == 0) & (blocks_outstanding == 0);
+
     if (resetn == 0) begin
         arsm_state <= 0;
+        halted     <= 1;
     end
 
     else case(arsm_state)
@@ -207,20 +223,24 @@ always @(posedge clk) begin
         // into the FIFO?
         1:  if (ar_blocks == blocks_to_read)
                 arsm_state <= 0;
-            else if (fifo_free >= CYCLES_PER_BLOCK)
+            else if (enable && fifo_free >= CYCLES_PER_BLOCK && blocks_outstanding <= 8)
                 arsm_state <= 2;
-
 
         // Request a block, them bump the address for next time
         2:  if (M_AXI_ARVALID & M_AXI_ARREADY) begin
                 M_AXI_ARADDR <= M_AXI_ARADDR + HBM_BLOCK_SIZE;
                 arsm_state   <= 1;
             end
+
     endcase
+
 
 end
 //-----------------------------------------------------------------------------
 assign M_AXI_ARVALID = (arsm_state == 2);
+
+// We're idle when we've received every data-block we asked for
+assign idle = (arsm_state == 0) & (start_stb == 0) & (r_blocks == ar_blocks);
 //=============================================================================
 
 
@@ -284,12 +304,6 @@ i_hbm_fifo
 );
 //=============================================================================
 
-
-// We're idle when we've received every data-block we asked for
-assign idle = (arsm_state == 0) & (start_stb == 0) & (r_blocks == ar_blocks);
-
-// Tell the outside world when our FIFO is full
-assign fifo_full = (fifo_free == 0);
 
 
 endmodule

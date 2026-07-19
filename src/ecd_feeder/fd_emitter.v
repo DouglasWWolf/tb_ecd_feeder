@@ -10,6 +10,9 @@
 /*
     This module emits RDMX packets with a 4KB payload whenever the number of 
     packets requested is greater than the number of packets sent thus far.
+
+    This module will never output a partial packet, even if "enable" goes
+    low during the middle of outputting a packet
 */
 
 
@@ -17,6 +20,19 @@ module fd_emitter # (parameter IN_DW = 512, parameter DW = 512, parameter CHANNE
 (
     input   clk,
     input   resetn,
+
+    // When this goes low, we gracefully stop emitting packets
+    input   enable,
+
+    // This is asserted when enable is low and we're quiescent
+    output  reg halted,
+
+    // If this asserts, output stalled mid-packet!
+    output  reg stall_error,
+
+    // The number of packets requested and the number of packets actually sent
+    // At the end of a job, these two values should be equal!
+    output reg[63:0] packets_req, packets_sent,
 
     // When "send_stb" strobes high, we record the number of packets to send
     input               local_send_stb, remote_send_stb,
@@ -44,9 +60,6 @@ localparam PAYLOAD_CYCLES = PAYLOAD_SIZE / (DW/8);
 // The RDMX header, in little-endian
 wire[511:0] le_rdmx_header;
 
-// The number of packets requested and actually sent
-reg[63:0] packets_req, packets_sent;
-
 //=============================================================================
 // Here we accumulate the total number of packets we need to send
 //=============================================================================
@@ -62,8 +75,13 @@ end
 
 
 //=============================================================================
-// Here we send the requested number of packet.  Each packet has an RDMX
-// header prefixed to it
+// Here we send the requested number of packets.  Each packet that is output 
+// has an RDMX header prefixed to it.
+//
+// When "enable" is deasserted, any packet in the middle of being emitted will
+// complete, but no new packets will be emitted.  It's critical that the 
+// entire packet be allowed to finish being emitted once "axis_out_tvalid"
+// has been asserted, even if "enable" goes low during the transmission.
 //=============================================================================
 reg       fsm_state;
 reg [6:0] cycle;
@@ -73,20 +91,26 @@ always @(posedge clk) begin
     if (resetn == 0) begin
         packets_sent <= 0;
         fsm_state    <= 0;
+        halted       <= 1;
     end
 
     else case(fsm_state)
 
-        // Send the RDMX header
-        0:  if (axis_out_tvalid & axis_out_tready) begin
-                cycle     <= 1;
-                fsm_state <= 1;
-            end
-
+        // Send the RDMX header.  We are very careful to not assert "halted"
+        // anytime between the first and last cycle of a packet being output
+        0:  if (axis_out_tvalid) begin
+                if (axis_out_tready) begin            
+                    cycle     <= 1;
+                    fsm_state <= 1;
+                end
+            end else
+                halted <= !enable;
+    
         // Send the packet payload
         1:  if (axis_out_tvalid & axis_out_tready) begin
                 if (axis_out_tlast) begin
                     packets_sent <= packets_sent + 1;
+                    halted       <= !enable;
                     fsm_state    <= 0;
                 end else
                     cycle <= cycle + 1;
@@ -113,7 +137,7 @@ always @* begin
 
         0:  begin
                 axis_out_tdata  = le_rdmx_header;
-                axis_out_tvalid = axis_in_tvalid & (packets_req > packets_sent);
+                axis_out_tvalid = !halted & axis_in_tvalid & (packets_req > packets_sent);
                 axis_out_tlast  = 0;
                 axis_in_tready  = 0;
             end
@@ -129,6 +153,39 @@ always @* begin
 
 end
 //=============================================================================
+
+
+//=============================================================================
+// Here we detect a stall on the output.   On a partial-packet (that is, a 
+// packet that begins to be emitted, but we don't see TLAST before the timeout)
+// arrives), we assert "stall_error"
+//
+// If "stall_timer" is 0, the timer isn't running.
+//=============================================================================
+reg[9:0] stall_timer;
+//=============================================================================
+always @(posedge clk) begin
+
+    if (resetn == 0) begin
+        stall_error <= 0;
+        stall_timer <= 0;
+    end
+
+    // If there is incoming data, we're not stalled
+    else if (axis_out_tvalid)
+        stall_timer <= (axis_out_tready & axis_out_tlast) ? 0 : -1;
+
+    // If the stall-timer reaches 1, we're stalled!
+    else if (stall_timer == 1)
+        stall_error <= 1;
+
+    // If the stall timer is running, count it down
+    else if (stall_timer)
+        stall_timer <= stall_timer - 1;
+end
+//=============================================================================
+
+
 
 //=============================================================================
 // This creates an RDMX header in little-endian order

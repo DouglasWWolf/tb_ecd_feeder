@@ -2044,6 +2044,9 @@
               "halted": {
                 "direction": "O"
               },
+              "read_error": {
+                "direction": "O"
+              },
               "half_frames_consumed": {
                 "direction": "O",
                 "left": "63",
@@ -2130,6 +2133,34 @@
                 "right": "0"
               },
               "fifo_full_0": {
+                "direction": "I"
+              },
+              "emitter_halted_0": {
+                "direction": "I"
+              },
+              "packets_req_0": {
+                "direction": "I",
+                "left": "63",
+                "right": "0"
+              },
+              "packets_sent_1": {
+                "direction": "I",
+                "left": "63",
+                "right": "0"
+              },
+              "host_read_error_0": {
+                "direction": "I"
+              },
+              "uw_writer_halted": {
+                "direction": "I"
+              },
+              "hbm_writer_halted_0": {
+                "direction": "I"
+              },
+              "hbm_reader_halted_0": {
+                "direction": "I"
+              },
+              "emitter_stall_1": {
                 "direction": "I"
               }
             },
@@ -2455,6 +2486,26 @@
                   "cattrip": {
                     "direction": "O"
                   },
+                  "packets_req_0": {
+                    "direction": "I",
+                    "left": "63",
+                    "right": "0"
+                  },
+                  "packets_req_1": {
+                    "direction": "I",
+                    "left": "63",
+                    "right": "0"
+                  },
+                  "packets_sent_0": {
+                    "direction": "I",
+                    "left": "63",
+                    "right": "0"
+                  },
+                  "packets_sent_1": {
+                    "direction": "I",
+                    "left": "63",
+                    "right": "0"
+                  },
                   "fifo_full_0": {
                     "direction": "I"
                   },
@@ -2471,10 +2522,43 @@
                     "left": "7",
                     "right": "0"
                   },
+                  "host_read_error_0": {
+                    "direction": "I"
+                  },
+                  "host_read_error_1": {
+                    "direction": "I"
+                  },
+                  "emitter_stall_0": {
+                    "direction": "I"
+                  },
+                  "emitter_stall_1": {
+                    "direction": "I"
+                  },
                   "reader_halted_0": {
                     "direction": "I"
                   },
                   "reader_halted_1": {
+                    "direction": "I"
+                  },
+                  "emitter_halted_0": {
+                    "direction": "I"
+                  },
+                  "emitter_halted_1": {
+                    "direction": "I"
+                  },
+                  "hbm_writer_halted_0": {
+                    "direction": "I"
+                  },
+                  "hbm_writer_halted_1": {
+                    "direction": "I"
+                  },
+                  "hbm_reader_halted_0": {
+                    "direction": "I"
+                  },
+                  "hbm_reader_halted_1": {
+                    "direction": "I"
+                  },
+                  "uw_writer_halted": {
                     "direction": "I"
                   },
                   "send_stb": {
@@ -2489,7 +2573,6 @@
                     "direction": "O"
                   },
                   "resetn_out": {
-                    "type": "rst",
                     "direction": "O",
                     "parameters": {
                       "POLARITY": {
@@ -2565,6 +2648,20 @@
                   "use_sim_data"
                 ]
               },
+              "emitter_halted_0_1": {
+                "ports": [
+                  "emitter_halted_0",
+                  "control/emitter_halted_0",
+                  "control/emitter_halted_1"
+                ]
+              },
+              "emitter_stall_1_1": {
+                "ports": [
+                  "emitter_stall_1",
+                  "control/emitter_stall_1",
+                  "control/emitter_stall_0"
+                ]
+              },
               "fifo_full_0_1": {
                 "ports": [
                   "fifo_full_0",
@@ -2572,11 +2669,46 @@
                   "control/fifo_full_1"
                 ]
               },
+              "hbm_reader_halted_0_1": {
+                "ports": [
+                  "hbm_reader_halted_0",
+                  "control/hbm_reader_halted_0",
+                  "control/hbm_reader_halted_1"
+                ]
+              },
               "hbm_temp_0_1": {
                 "ports": [
                   "hbm_temp_0",
                   "control/hbm_temp_0",
                   "control/hbm_temp_1"
+                ]
+              },
+              "hbm_writer_halted_0_1": {
+                "ports": [
+                  "hbm_writer_halted_0",
+                  "control/hbm_writer_halted_0",
+                  "control/hbm_writer_halted_1"
+                ]
+              },
+              "host_read_error_0_1": {
+                "ports": [
+                  "host_read_error_0",
+                  "control/host_read_error_0",
+                  "control/host_read_error_1"
+                ]
+              },
+              "packets_req_0_1": {
+                "ports": [
+                  "packets_req_0",
+                  "control/packets_req_0",
+                  "control/packets_req_1"
+                ]
+              },
+              "packets_sent_1_1": {
+                "ports": [
+                  "packets_sent_1",
+                  "control/packets_sent_0",
+                  "control/packets_sent_1"
                 ]
               },
               "proc_sys_reset_peripheral_aresetn": {
@@ -2618,6 +2750,12 @@
                   "resetn",
                   "control/resetn"
                 ]
+              },
+              "uw_writer_halted_1": {
+                "ports": [
+                  "uw_writer_halted",
+                  "control/uw_writer_halted"
+                ]
               }
             }
           },
@@ -2648,6 +2786,15 @@
                 "right": "0"
               },
               "fifo_full": {
+                "direction": "O"
+              },
+              "enable": {
+                "direction": "I"
+              },
+              "hbm_writer_halted": {
+                "direction": "O"
+              },
+              "hbm_reader_halted": {
                 "direction": "O"
               }
             },
@@ -3097,6 +3244,12 @@
                     "direction": "I"
                   },
                   "idle": {
+                    "direction": "O"
+                  },
+                  "enable": {
+                    "direction": "I"
+                  },
+                  "halted": {
                     "direction": "O"
                   },
                   "blocks_stored_in_hbm": {
@@ -6268,6 +6421,12 @@
                   "bank_select": {
                     "direction": "I"
                   },
+                  "enable": {
+                    "direction": "I"
+                  },
+                  "halted": {
+                    "direction": "O"
+                  },
                   "idle": {
                     "direction": "O"
                   },
@@ -6332,9 +6491,16 @@
                 "ports": [
                   "aresetn",
                   "hbm/aresetn",
-                  "hbm_writer/resetn",
                   "hbm_manager/resetn",
+                  "hbm_writer/resetn",
                   "hbm_reader/resetn"
+                ]
+              },
+              "enable_1": {
+                "ports": [
+                  "enable",
+                  "hbm_reader/enable",
+                  "hbm_writer/enable"
                 ]
               },
               "hbm_manager_0_halt_req_stb": {
@@ -6385,6 +6551,12 @@
                   "fifo_full"
                 ]
               },
+              "hbm_reader_halted1": {
+                "ports": [
+                  "hbm_reader/halted",
+                  "hbm_reader_halted"
+                ]
+              },
               "hbm_writer_0_blocks_stored_in_hbm": {
                 "ports": [
                   "hbm_writer/blocks_stored_in_hbm",
@@ -6397,6 +6569,12 @@
                   "hbm_manager/writer_idle"
                 ]
               },
+              "hbm_writer_halted1": {
+                "ports": [
+                  "hbm_writer/halted",
+                  "hbm_writer_halted"
+                ]
+              },
               "ilconstant_0_dout": {
                 "ports": [
                   "hbm_temp/dout",
@@ -6407,8 +6585,8 @@
                 "ports": [
                   "clk",
                   "hbm/aclk",
-                  "hbm_writer/clk",
                   "hbm_manager/clk",
+                  "hbm_writer/clk",
                   "hbm_reader/clk"
                 ]
               }
@@ -6461,6 +6639,25 @@
                 "direction": "O",
                 "left": "7",
                 "right": "0"
+              },
+              "enable": {
+                "direction": "I"
+              },
+              "halted": {
+                "direction": "O"
+              },
+              "packets_req": {
+                "direction": "O",
+                "left": "63",
+                "right": "0"
+              },
+              "packet_sent": {
+                "direction": "O",
+                "left": "63",
+                "right": "0"
+              },
+              "stall_error": {
+                "direction": "O"
               }
             },
             "components": {
@@ -6657,6 +6854,25 @@
                       }
                     }
                   },
+                  "enable": {
+                    "direction": "I"
+                  },
+                  "halted": {
+                    "direction": "O"
+                  },
+                  "stall_error": {
+                    "direction": "O"
+                  },
+                  "packets_req": {
+                    "direction": "O",
+                    "left": "63",
+                    "right": "0"
+                  },
+                  "packets_sent": {
+                    "direction": "O",
+                    "left": "63",
+                    "right": "0"
+                  },
                   "local_send_stb": {
                     "direction": "I"
                   },
@@ -6692,7 +6908,7 @@
                   "boundary_crc": "0x0"
                 },
                 "interface_ports": {
-                  "pkt_in": {
+                  "i_pkt_in": {
                     "mode": "Monitor",
                     "monitor_type": "SlaveType",
                     "vlnv_bus_definition": "xilinx.com:interface:axis:1.0",
@@ -6745,26 +6961,26 @@
                     },
                     "port_maps": {
                       "TDATA": {
-                        "physical_name": "pkt_in_tdata",
+                        "physical_name": "i_pkt_in_tdata",
                         "direction": "I",
                         "left": "511",
                         "right": "0"
                       },
                       "TLAST": {
-                        "physical_name": "pkt_in_tlast",
+                        "physical_name": "i_pkt_in_tlast",
                         "direction": "I"
                       },
                       "TVALID": {
-                        "physical_name": "pkt_in_tvalid",
+                        "physical_name": "i_pkt_in_tvalid",
                         "direction": "I"
                       },
                       "TREADY": {
-                        "physical_name": "pkt_in_tready",
+                        "physical_name": "i_pkt_in_tready",
                         "direction": "I"
                       }
                     }
                   },
-                  "raw_in": {
+                  "i_raw_in": {
                     "mode": "Monitor",
                     "monitor_type": "SlaveType",
                     "vlnv_bus_definition": "xilinx.com:interface:axis:1.0",
@@ -6817,17 +7033,17 @@
                     },
                     "port_maps": {
                       "TDATA": {
-                        "physical_name": "raw_in_tdata",
+                        "physical_name": "i_raw_in_tdata",
                         "direction": "I",
                         "left": "63",
                         "right": "0"
                       },
                       "TVALID": {
-                        "physical_name": "raw_in_tvalid",
+                        "physical_name": "i_raw_in_tvalid",
                         "direction": "I"
                       },
                       "TREADY": {
-                        "physical_name": "raw_in_tready",
+                        "physical_name": "i_raw_in_tready",
                         "direction": "I"
                       }
                     }
@@ -6839,7 +7055,7 @@
                     "direction": "I",
                     "parameters": {
                       "ASSOCIATED_BUSIF": {
-                        "value": "pkt_in:raw_in",
+                        "value": "i_pkt_in:i_raw_in",
                         "value_src": "constant"
                       },
                       "ASSOCIATED_RESET": {
@@ -6888,14 +7104,14 @@
                 "interface_ports": [
                   "pkt_in",
                   "fd_emitter/axis_out",
-                  "fifo_selftest/pkt_in"
+                  "fifo_selftest/i_pkt_in"
                 ]
               },
               "hbm_fifo_axis_out": {
                 "interface_ports": [
                   "axis_in",
                   "fd_emitter/axis_in",
-                  "fifo_selftest/raw_in"
+                  "fifo_selftest/i_raw_in"
                 ]
               }
             },
@@ -6909,8 +7125,8 @@
               "control_resetn_out": {
                 "ports": [
                   "resetn",
-                  "fd_emitter/resetn",
-                  "fifo_selftest/resetn"
+                  "fifo_selftest/resetn",
+                  "fd_emitter/resetn"
                 ]
               },
               "control_send_cnt": {
@@ -6923,6 +7139,36 @@
                 "ports": [
                   "local_send_stb",
                   "fd_emitter/local_send_stb"
+                ]
+              },
+              "enable_1": {
+                "ports": [
+                  "enable",
+                  "fd_emitter/enable"
+                ]
+              },
+              "fd_emitter_halted": {
+                "ports": [
+                  "fd_emitter/halted",
+                  "halted"
+                ]
+              },
+              "fd_emitter_packet_sent": {
+                "ports": [
+                  "fd_emitter/packets_sent",
+                  "packet_sent"
+                ]
+              },
+              "fd_emitter_packets_req": {
+                "ports": [
+                  "fd_emitter/packets_req",
+                  "packets_req"
+                ]
+              },
+              "fd_emitter_stall_error": {
+                "ports": [
+                  "fd_emitter/stall_error",
+                  "stall_error"
                 ]
               },
               "fifo_selftest_0_error": {
@@ -6946,8 +7192,8 @@
               "source_100mhz_sys_clk": {
                 "ports": [
                   "clk",
-                  "fd_emitter/clk",
-                  "fifo_selftest/clk"
+                  "fifo_selftest/clk",
+                  "fd_emitter/clk"
                 ]
               }
             }
@@ -6989,7 +7235,9 @@
           "control_enable": {
             "ports": [
               "control/enable",
-              "host_ram_reader/i_enable"
+              "fd_emitter/enable",
+              "host_ram_reader/i_enable",
+              "hbm_fifo/enable"
             ]
           },
           "control_fd_host_addr": {
@@ -7037,6 +7285,24 @@
               "host_ram_reader/i_use_sim_data"
             ]
           },
+          "fd_emitter_halted": {
+            "ports": [
+              "fd_emitter/halted",
+              "control/emitter_halted_0"
+            ]
+          },
+          "fd_emitter_packet_sent": {
+            "ports": [
+              "fd_emitter/packet_sent",
+              "control/packets_sent_1"
+            ]
+          },
+          "fd_emitter_packets_req": {
+            "ports": [
+              "fd_emitter/packets_req",
+              "control/packets_req_0"
+            ]
+          },
           "fifo_selftest_0_error": {
             "ports": [
               "fd_emitter/error",
@@ -7049,10 +7315,22 @@
               "control/fifo_full_0"
             ]
           },
+          "hbm_fifo_hbm_reader_halted": {
+            "ports": [
+              "hbm_fifo/hbm_reader_halted",
+              "control/hbm_reader_halted_0"
+            ]
+          },
           "hbm_fifo_hbm_temp": {
             "ports": [
               "hbm_fifo/hbm_temp",
               "control/hbm_temp_0"
+            ]
+          },
+          "hbm_fifo_hbm_writer_halted": {
+            "ports": [
+              "hbm_fifo/hbm_writer_halted",
+              "control/hbm_writer_halted_0"
             ]
           },
           "host_ram_reader_half_frames_consumed": {
@@ -7065,6 +7343,12 @@
             "ports": [
               "host_ram_reader/halted",
               "control/reader_halted_1"
+            ]
+          },
+          "host_ram_reader_read_error": {
+            "ports": [
+              "host_ram_reader/read_error",
+              "control/host_read_error_0"
             ]
           },
           "remote_send_cnt_1": {

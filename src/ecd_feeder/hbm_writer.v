@@ -34,7 +34,12 @@ module hbm_writer #
     
     // This is asserted when we're completely idle
     output          idle,
-   
+
+    // Asserted when it's safe to run
+    input           enable,
+
+    // Asserted when it's safe to reset
+    output reg      halted,
 
     // This tracks the number of blocks that we've stored in HBM since
     // the last time "start_stb" was asserted
@@ -142,6 +147,9 @@ wire[63:0] base_address = (bank_select) ? HBM_BANK_SIZE : 0;
 
 // The total number of blocks completed on each M_AXI channel since "start_stb"
 reg[31:0] aw_blocks, w_blocks, b_blocks;
+
+// The number of writes requested, but not yet complete and acknowledge
+wire[31:0] blocks_outstanding = aw_blocks - b_blocks;
 
 // Same as "aw_blocks", but cleared only by reset
 reg[63:0] total_aw_blocks;
@@ -253,8 +261,13 @@ end
 reg[1:0] awsm_state;
 //-----------------------------------------------------------------------------
 always @(posedge clk) begin
+
+    // We're halted when we're disabled and all write-requests are satisfied
+    halted <= (awsm_state != 2) & (enable == 0) & (blocks_outstanding == 0);
+
     if (resetn == 0) begin
         awsm_state <= 0;
+        halted     <= 1;
     end
 
     else case (awsm_state)
@@ -270,7 +283,7 @@ always @(posedge clk) begin
         // of data waiting for us in the FIFO, go issue a write-request
         1:  if (halt_req_stb | halt_req)
                 awsm_state <= 0;
-            else if (total_blocks_rcvd > total_aw_blocks) begin
+            else if (enable && total_blocks_rcvd > total_aw_blocks) begin
                 awsm_state <= 2;
             end
 

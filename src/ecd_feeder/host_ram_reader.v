@@ -44,7 +44,10 @@ module host_ram_reader #
     input   i_use_sim_data,
 
     // When this is asserted, the PCIe bus is quiescent
-    output  halted,
+    output reg halted,
+
+    // This is asserted of M_AXI_RRESP is ever non-zero
+    output reg read_error,
 
     // The number of frames consumed from host-RAM
     output reg[63:0] half_frames_consumed,
@@ -150,9 +153,6 @@ reg[31:0] burst_within_frame;
 // The number of reads requested, and the number of reads completed
 reg[63:0] ar_req_count, ar_rsp_count;
 
-// Tell the outside world when the PCIe bus is quiescent
-assign halted = !enable && (ar_rsp_count == ar_req_count);
-
 // This is the amount of room remaining in the FIFO
 reg[$clog2(HRR_FIFO_DEPTH):0] fifo_free;
 
@@ -186,6 +186,20 @@ assign M_AXI_RREADY  = (resetn == 1);
 
 
 //=============================================================================
+// If the read-response from the PCI bridge is ever non-zero, we assert
+// "read_error"
+//=============================================================================
+always @(posedge clk) begin
+    if (resetn == 0)
+        read_error <= 0;
+    else if (M_AXI_RVALID && M_AXI_RRESP != 0)
+        read_error <= 1;
+end
+//=============================================================================
+
+
+
+//=============================================================================
 // araddr holds the offset in the host RAM buffer where we will read our
 // next burst of data from.  This block computes the *next* offset in host RAM
 // that we will read from
@@ -206,6 +220,9 @@ end
 //=============================================================================
 // This block continuously sends an AXI burst-read request whenever it 
 // is allowed.
+//
+// After enable goes low, we take care to only declare ourselves "halted" 
+// after all outstanding read-requests have been satisfied 
 //=============================================================================
 reg arsm_state;
 //----------------------------------------------------------------------------
@@ -214,14 +231,17 @@ always @(posedge clk) begin
     if (resetn == 0) begin
         araddr     <= FIRST_RAM_OFFSET;
         arsm_state <= 0;
+        halted     <= 1;
     end
 
     else case(arsm_state) 
 
         // If we're enabled and the PCI bridge is ready for a read-request...
-        0:  if (enable & (fifo_free >= BURST_CYCLES) & M_AXI_ARREADY) begin
-                arsm_state <= 1;
-            end
+        0:  if (enable) begin
+                halted     <= 0;
+                arsm_state <= (fifo_free >= BURST_CYCLES) & M_AXI_ARREADY;
+            end else
+                halted <= (ar_rsp_count == ar_req_count);            
 
         // Here we issue the read request and wait for
         // it to be accepted
@@ -237,26 +257,24 @@ assign M_AXI_ARADDR  = fd_host_addr + araddr;
 
 
 //=============================================================================
-// This keeps track of the total number of read-requests issued
+// Here we keep track of the total number of read-requests issued and fulfilled
 //=============================================================================
 always @(posedge clk) begin
-    if (resetn == 0)
+    if (resetn == 0) begin
         ar_req_count <= 0;
-    else if (M_AXI_ARVALID & M_AXI_ARREADY)
-        ar_req_count <= ar_req_count + 1;
+        ar_rsp_count <= 0;
+    end
+    
+    else begin
+        if (M_AXI_ARVALID & M_AXI_ARREADY)
+            ar_req_count <= ar_req_count + 1;
+
+        if (M_AXI_RVALID & M_AXI_RREADY & M_AXI_RLAST)
+            ar_rsp_count <= ar_rsp_count + 1;
+    end
 end
 //=============================================================================
 
-//=============================================================================
-// This keeps track of the total number of read-requests fulfilled
-//=============================================================================
-always @(posedge clk) begin
-    if (resetn == 0)
-        ar_rsp_count <= 0;
-    else if (M_AXI_RVALID & M_AXI_RREADY & M_AXI_RLAST)
-        ar_rsp_count <= ar_rsp_count + 1;
-end
-//=============================================================================
 
 
 //=============================================================================

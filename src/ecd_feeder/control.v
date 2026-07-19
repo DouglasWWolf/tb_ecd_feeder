@@ -40,14 +40,38 @@ module control # (parameter AW=8)
     // This goes to the "hbm_cattrip" pin on the FPGA
     output cattrip,
 
+    // The number of packets requested from each QSFP hannel
+    input[63:0] packets_req_0, packets_req_1,
+
+    // The number of packets sent on each QSFP channel
+    input[63:0] packets_sent_0, packets_sent_1,
+
     // These indicate when the output FIFO is full
     input fifo_full_0, fifo_full_1,
 
     // These are asserted when a FIFO self-test fails
     input[7:0] selftest_err_0, selftest_err_1,
 
+    // These report read-errors on the PCIe bus
+    input host_read_error_0, host_read_error_1,
+
+    // These assert when the frame emitter detects an illegal mid-packet stall
+    input emitter_stall_0, emitter_stall_1,
+
     // These are asserted when the "ram_reader" modules are halted
     input reader_halted_0, reader_halted_1,
+
+    // These are asserted when the frame-data emitter modules are halted
+    input emitter_halted_0, emitter_halted_1,
+
+    // Asserted when the HBM writers are halted
+    input hbm_writer_halted_0, hbm_writer_halted_1,
+
+    // Asserted when the HBM readers are halted
+    input hbm_reader_halted_0, hbm_reader_halted_1,
+
+    // Asserted when writing userwave data to host-RAM has been halted
+    input uw_writer_halted,
 
     // We use these to tell "fd_emitter" to start sending packets
     output reg        send_stb,
@@ -58,8 +82,6 @@ module control # (parameter AW=8)
     output reg use_sim_data,
 
     // We generate reset to the rest of the system
-    (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 resetn_out RST" *)
-    (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_LOW" *)
     output reg resetn_out,
 
     //================== This is an AXI4-Lite slave interface ==================
@@ -193,7 +215,44 @@ localparam REG_HBM1_TEMP = 19;
 */
 localparam REG_SELFTEST_ERR = 20;
 
+/*
+    @register The number of packets requested on channel 0
+    @rtype r/o
+    @rsize 64
+    @rname REG_CH0_PACKETS_REQ
+*/
+localparam REG_CH0_PACKETS_REQ_H = 21;
+localparam REG_CH0_PACKETS_REQ_L = 22;
 
+
+/*
+    @register The number of packets requested on channel 1
+    @rtype r/o
+    @rsize 64
+    @rname REG_CH1_PACKETS_REQ
+*/
+localparam REG_CH1_PACKETS_REQ_H = 23;
+localparam REG_CH1_PACKETS_REQ_L = 24;
+
+
+/*
+    @register The number of packets sent on channel 0
+    @rtype r/o
+    @rsize 64
+    @rname REG_CH0_PACKETS_SENT
+*/
+localparam REG_CH0_PACKETS_SENT_H = 25;
+localparam REG_CH0_PACKETS_SENT_L = 26;
+
+
+/*
+    @register The number of packets sent on channel 1
+    @rtype r/o
+    @rsize 64
+    @rname REG_CH1_PACKETS_SENT
+*/
+localparam REG_CH1_PACKETS_SENT_H = 27;
+localparam REG_CH1_PACKETS_SENT_L = 28;
 //==========================================================================
 
 
@@ -233,9 +292,15 @@ localparam DECERR = 3;
 reg[1:0] rsm_state;
 
 // system_halted is asserted when all components of the system are idle
-wire system_halted = reader_halted_0
-                   & reader_halted_1;
-
+wire system_halted =     reader_halted_0
+                   &     reader_halted_1
+                   &    emitter_halted_0
+                   &    emitter_halted_1
+                   & hbm_reader_halted_0
+                   & hbm_reader_halted_1
+                   & hbm_writer_halted_0
+                   & hbm_writer_halted_1
+                   & uw_writer_halted;
 
 // When this strobes high, we start fetching data from host RAM
 reg start_stb;
@@ -243,11 +308,12 @@ reg start_stb;
 // When this is asserted, the system is fetching data over PCIe
 reg running;
 
-// The lower 32-bits of "frames_consumed" at the moment that the 
-// uppper 32-bits were last read
+// The lower 32 bits of 64 bit register reads
 reg[31:0] frames_consumed_l;
-reg       frames_consumed_l_saved;
- 
+reg[31:0] packets_req_l[0:1];
+reg[31:0] packets_sent_l[0:1];
+
+
 // If either HBM bank shows a catastrophic temperature, shut down the FPGA!
 assign cattrip = cattrip_0 | cattrip_1;
 
@@ -357,7 +423,7 @@ always @(posedge clk) begin
     if (resetn == 0) begin
         ashi_read_state         <= 0;
         frames_consumed_l       <= 0;
-        frames_consumed_l_saved <= 0;
+
     end
 
     // If we're not in reset, and a read-request has occured...        
@@ -384,26 +450,50 @@ always @(posedge clk) begin
             REG_HBM0_TEMP:          ashi_rdata <= hbm_temp_0;
             REG_HBM1_TEMP:          ashi_rdata <= hbm_temp_1;
 
-            REG_SELFTEST_ERR:
-                if (use_sim_data)
-                    ashi_rdata <= {selftest_err_1, selftest_err_0};
-                else
-                    ashi_rdata <= 0;
+            REG_SELFTEST_ERR:       ashi_rdata <=
+                                    {
+                                        emitter_stall_1,
+                                        emitter_stall_0,
+                                        host_read_error_1,
+                                        host_read_error_0,
+                                        (use_sim_data) ? selftest_err_1 : 8'h0,
+                                        (use_sim_data) ? selftest_err_0 : 8'h0
+                                    };
 
             REG_FRM_CONSUMED_H:
                 begin
-                    ashi_rdata              <= frames_consumed[63:32];
-                    frames_consumed_l       <= frames_consumed[31:00];
-                    frames_consumed_l_saved <= 1;
+                    ashi_rdata        <= frames_consumed[63:32];
+                    frames_consumed_l <= frames_consumed[31:00];
                 end
 
-            REG_FRM_CONSUMED_L:
+            REG_FRM_CONSUMED_L:     ashi_rdata <= frames_consumed_l;
+            REG_CH0_PACKETS_REQ_L:  ashi_rdata <= packets_req_l[0];
+            REG_CH1_PACKETS_REQ_L:  ashi_rdata <= packets_req_l[1];
+            REG_CH0_PACKETS_SENT_L: ashi_rdata <= packets_sent_l[0];
+            REG_CH1_PACKETS_SENT_L: ashi_rdata <= packets_sent_l[1];
+
+            REG_CH0_PACKETS_REQ_H:
                 begin
-                    if (frames_consumed_l_saved)
-                        ashi_rdata <= frames_consumed_l;
-                    else
-                        ashi_rdata <= frames_consumed[31:0];
-                    frames_consumed_l <= 0;
+                    ashi_rdata        <= packets_req_0[63:32];
+                    packets_req_l[0]  <= packets_req_0[31:00];
+                end
+
+            REG_CH1_PACKETS_REQ_H:
+                begin
+                    ashi_rdata        <= packets_req_1[63:32];
+                    packets_req_l[1]  <= packets_req_1[31:00];
+                end
+
+            REG_CH0_PACKETS_SENT_H:
+                begin
+                    ashi_rdata        <= packets_sent_0[63:32];
+                    packets_sent_l[0] <= packets_sent_0[31:00];
+                end
+
+            REG_CH1_PACKETS_SENT_H:
+                begin
+                    ashi_rdata        <= packets_sent_1[63:32];
+                    packets_sent_l[1] <= packets_sent_1[31:00];
                 end
 
 
@@ -419,8 +509,10 @@ end
 //==========================================================================
 // This state machine controls the resetn_out pin.
 //
-// When the user writes to REG_RESET, a different state machine requests
-// a system halt.
+// When a halt-request is recieved (i.e., when halt_req_stb is strobed), we
+// bring the system to a graceful halt before issuing the reset.  We do this
+// in order to ensure that no partial packets are sent and no partial PCI
+// transactions occur.
 //==========================================================================
 reg[31:0] reset_counter;
 //--------------------------------------------------------------------------
@@ -431,15 +523,13 @@ always @(posedge clk) begin
     if (resetn == 0) begin
         rsm_state  <= 0;
         resetn_out <= 0;
-    end
+    end 
 
     else case(rsm_state)
         0:  begin
-                resetn_out <= 1;
-                if (halt_req_stb) begin
-                    reset_counter <= 1000000;
-                    rsm_state     <= 1;
-                end
+                resetn_out    <= 1;
+                reset_counter <= 1000000;
+                rsm_state     <= halt_req_stb;
             end
 
         1:  if (system_halted || (reset_counter == 0)) begin
